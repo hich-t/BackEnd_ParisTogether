@@ -49,6 +49,13 @@ authRouter.get("/user", async (req, res) => {
     .catch((err) => res.json(err));
 });
 
+authRouter.get("/user/:id", async (req, res) => {
+
+  User.findOne({ _id: req.params.id })
+    .then((user) => res.json(user))
+    .catch((err) => res.json(err));
+});
+
 authRouter.put("/user", async (req, res) => {
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;

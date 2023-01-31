@@ -10,7 +10,8 @@ const userSchema = new Schema({
   password: { type: String, required: true, minLength: 5 },
   confirm_password: { type: String, minLength: 5 },
   favoriteEvent : {type : Array},
-  favoriteTag : {type : Array}
+  favoriteTag : {type : Array},
+  eventInCalendar : {type : Array}
 });
 
 const User = mongoose.model("User", userSchema);
