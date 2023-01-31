@@ -62,9 +62,6 @@ authRouter.put("/user", async (req, res) => {
 });
 
 authRouter.delete("/user", async (req, res) => {
-  console.log(req.body.favoriteEvent);
-  console.log(req.headers.authorization);
-
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
 
   let id = checkToken.user._id;
