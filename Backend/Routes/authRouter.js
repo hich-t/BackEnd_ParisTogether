@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const { request } = require("express");
 authRouter.use(express.json());
 
-authRouter.post("/registrer", async (req, res) => {
+authRouter.post("/register", async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
   if (emailExist) return res.status(409).send("Email already exist");
   if (req.body.password !== req.body.confirm_password)
@@ -29,10 +29,18 @@ authRouter.post("/registrer", async (req, res) => {
   }
 });
 
+authRouter.get('/user/all', (req, res) => {
+  User
+  .find()
+  .then(user => 
+      res.json(user)
+      )
+  .catch(err => res.json(err))
+});
+
 authRouter.post("/login", async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
   if (!user) return res.status(400).send("Email not found");
-  console.log(user);
   const validPass = await bcrypt.compare(req.body.password, user.password);
   if (!validPass) return res.status(400).send("Password is not valid");
 
