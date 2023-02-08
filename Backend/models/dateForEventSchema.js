@@ -7,6 +7,7 @@ const dateforEventSchema = new Schema({
     ref: 'User',
     required: true
   }],
+  pseudo : {type :Array , required : true},
   idEvent: {
     type : String ,
     required: true

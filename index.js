@@ -1,16 +1,26 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
+const path = require("path");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 require("dotenv").config();
 
-const userRouter = require("./backend/routes/authRouter");
+const userRouter = require("./Backend/Routes/authRouter");
+const eventRouter = require("./Backend/Routes/eventRouter");
+const dateForEventRouter = require("./Backend/Routes/dateForEventRouteur");
+const commentRouter = require("./Backend/Routes/commentRouter");
 
 const cors = require("cors");
-
+app.use("public/images", express.static("public/images"));
+app.get("/public/images/:filename", (req, res) => {
+  const file = `public/images/${req.params.filename}`;
+  res.sendFile(path.resolve(file));
+});
 app.use(cors());
-app.use("/request", userRouter);
+app.use("/request", userRouter, eventRouter, dateForEventRouter, commentRouter);
+
+
 
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI, { useNewUrlParser: true });

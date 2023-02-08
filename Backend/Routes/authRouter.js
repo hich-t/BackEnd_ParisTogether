@@ -5,6 +5,27 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { request } = require("express");
 authRouter.use(express.json());
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/images/");
+  },
+
+  filename: function (req, file, cb) {
+    console.log(file);
+    cb(
+      null,
+      file.filename +
+        "-" +
+        Date.now() +
+        "." +
+        file.originalname.split(".").pop()
+    );
+  },
+});
+
+const upload = multer({ storage: storage });
 
 authRouter.post("/register", async (req, res) => {
   const emailExist = await User.findOne({ email: req.body.email });
@@ -16,8 +37,10 @@ authRouter.post("/register", async (req, res) => {
     const hashPassword = await bcrypt.hash(req.body.password, salt);
 
     const user = new User({
+      pseudo: req.body.pseudo,
       first_name: req.body.first_name,
       last_name: req.body.last_name,
+      age : req.body.age,
       email: req.body.email,
       password: hashPassword,
     });
@@ -29,13 +52,12 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-authRouter.get('/user/all', (req, res) => {
-  User
-  .find()
-  .then(user => 
-      res.json(user)
-      )
-  .catch(err => res.json(err))
+authRouter.get("/user/all", (req, res) => {
+  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = checkToken.user._id;
+  User.find()
+    .then((user) => res.json(user))
+    .catch((err) => res.json(err));
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -50,12 +72,14 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.get("/user", async (req, res) => {
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
-  User.findOne({ _id: id })
-    .then((user) => res.json(user))
-    .catch((err) => res.json(err));
-});
+  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+    let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+    let id = checkToken.user._id;
+    User.findOne({ _id: id })
+      .populate("favoriteEvent")
+      .then((user) => res.json(user))
+      .catch((err) => res.json(err));
+  });
 
 authRouter.get("/user/:id", async (req, res) => {
 
@@ -67,14 +91,44 @@ authRouter.get("/user/:id", async (req, res) => {
 authRouter.put("/user", async (req, res) => {
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;
-  const user = await User.findOne({ _id: id });
-  if (user.favoriteEvent.includes(req.body.favoriteEvent))
+  let user = await User.findOne({ _id: id });
+  if (
+    req.body.favoriteEvent  &&
+    user.favoriteEvent.includes(req.body.favoriteEvent)
+  )
+    return res.status(400).send("Already in your favorite");
+  if (
+    req.body.favoriteTag &&
+    user.favoriteTag.includes(req.body.favoriteTag)
+  )
     return res.status(400).send("Already in your favorite");
 
   User.findOneAndUpdate({ _id: id }, { $push: req.body })
     .then((NewUser) => res.json(NewUser))
     .catch((err) => res.json(err));
 });
+
+authRouter.put(
+  "/uploadimage",
+  upload.single("profile_picture"),
+  async (req, res) => {
+    let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+
+    let id = checkToken.user._id;
+    console.log(req.file);
+    try {
+      const user = await User.findOne({ _id: id });
+      await user.updateOne({
+        $set: {
+          profile_picture: "/public/images/" + req.file.filename,
+        },
+      });
+      console.log(req.file.filename);
+    } catch (err) {
+      res.json(err);
+    }
+  }
+);
 
 authRouter.delete("/user", async (req, res) => {
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
@@ -83,6 +137,33 @@ authRouter.delete("/user", async (req, res) => {
   User.findOneAndUpdate({ _id: id }, { $pull: req.body })
     .then((NewUser) => res.json(NewUser))
     .catch((err) => res.json(err));
+});
+
+authRouter.put("/update", async (req, res) => {
+  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = checkToken.user._id;
+  let user = await User.findOne({ _id: id });
+
+  if (req.body.email) {
+    const emailExist = await User.findOne({ email: req.body.email });
+    if (emailExist && emailExist._id !== user._id)
+      return res.status(409).send("Email already exists");
+
+    user.email = req.body.email;
+  }
+
+  if (req.body.password && req.body.confirm_password) {
+    if (req.body.password !== req.body.confirm_password)
+      return res.status(409).send("Confirmation password is not Ok");
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(req.body.password, salt);
+    user.password = hashPassword;
+  }
+
+  user.save();
+
+  res.json({ message: "User information updated successfully" });
 });
 
 module.exports = authRouter;
