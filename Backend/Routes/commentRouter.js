@@ -17,6 +17,7 @@ commentRouter.get("/comment/:id", async (req, res) => {
 });
 
 commentRouter.post("/comment/:id", async (req, res) => {
+  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;
 
@@ -29,7 +30,9 @@ commentRouter.post("/comment/:id", async (req, res) => {
     idEvent: req.params.id,
   });
 
-  comment.save().catch((err) => res.json(err));
+  comment.save()
+  .then(comment => res.json(comment))
+  .catch((err) => res.json(err));
 });
 
 module.exports = commentRouter;

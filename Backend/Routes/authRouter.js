@@ -53,6 +53,7 @@ authRouter.post("/register", async (req, res) => {
 });
 
 authRouter.get("/user/all", (req, res) => {
+  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;
   User.find()
@@ -89,6 +90,7 @@ authRouter.get("/user/:id", async (req, res) => {
 });
 
 authRouter.put("/user", async (req, res) => {
+  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;
   let user = await User.findOne({ _id: id });
@@ -112,6 +114,7 @@ authRouter.put(
   "/uploadimage",
   upload.single("profile_picture"),
   async (req, res) => {
+    if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
     let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
 
     let id = checkToken.user._id;
@@ -132,14 +135,15 @@ authRouter.put(
 
 authRouter.delete("/user", async (req, res) => {
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-
   let id = checkToken.user._id;
+
   User.findOneAndUpdate({ _id: id }, { $pull: req.body })
     .then((NewUser) => res.json(NewUser))
     .catch((err) => res.json(err));
 });
 
 authRouter.put("/update", async (req, res) => {
+  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = checkToken.user._id;
   let user = await User.findOne({ _id: id });
