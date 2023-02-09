@@ -3,6 +3,7 @@ const dateForEventRouter = express.Router();
 const DateForEvent = require("../models/dateForEventSchema");
 const jwt = require("jsonwebtoken");
 dateForEventRouter.use(express.json());
+const tokenVerify = require("../verify")
 
 dateForEventRouter.get("/dateForEvent/all", async (req, res) => {
   DateForEvent.find()
@@ -16,10 +17,10 @@ dateForEventRouter.get("/dateForEvent/all/:id", async (req, res) => {
     .catch((err) => res.json(err));
 });
 
-dateForEventRouter.put("/dateForEvent/:id", async (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
+dateForEventRouter.put("/dateForEvent/:id",tokenVerify, async (req, res) => {
+  // if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+  // let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = req.user.user._id;
 
   const allDateForEvent = await DateForEvent.find({
     idEvent: { $in: [req.params.id] }

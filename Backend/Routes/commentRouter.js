@@ -3,12 +3,13 @@ const commentRouter = express.Router();
 const Comment = require("../models/CommentsModel");
 const jwt = require("jsonwebtoken");
 commentRouter.use(express.json());
+const tokenVerify = require("../verify")
 
 commentRouter.get("/comment/:id", async (req, res) => {
   const commentExist = await Comment.findOne({ idEvent: req.params.id });
   if (commentExist) {
     Comment.find({ idEvent: { $in: [req.params.id] } })
-      .then((user) => res.json(user))
+      .then((comment) => res.json(comment))
       .catch((err) => res.json(err));
   }
   if (!commentExist) {
@@ -16,10 +17,10 @@ commentRouter.get("/comment/:id", async (req, res) => {
   }
 });
 
-commentRouter.post("/comment/:id", async (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
+commentRouter.post("/comment/:id",tokenVerify, async (req, res) => {
+  // if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+  // let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = req.user.user._id;
 
   const comment = new Comment({
     pseudo: req.body.pseudo,

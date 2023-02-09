@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const { request } = require("express");
 authRouter.use(express.json());
 const multer = require("multer");
+const tokenVerify = require("../verify")
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -52,10 +53,12 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-authRouter.get("/user/all", (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
+authRouter.get("/user/all",tokenVerify, (req, res) => {
+/*   if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET); */
+  /* let id = checkToken.user._id; */
+
+  // let id = req.user.user._id;
   User.find()
     .then((user) => res.json(user))
     .catch((err) => res.json(err));
@@ -72,10 +75,12 @@ authRouter.post("/login", async (req, res) => {
   res.json(token);
 });
 
-authRouter.get("/user", async (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+authRouter.get("/user", tokenVerify, async (req, res) => {
+/*   if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
     let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-    let id = checkToken.user._id;
+    let id = checkToken.user._id; */
+    let id = req.user.user._id;
+
     User.findOne({ _id: id })
       .populate("favoriteEvent")
       .then((user) => res.json(user))
@@ -89,10 +94,12 @@ authRouter.get("/user/:id", async (req, res) => {
     .catch((err) => res.json(err));
 });
 
-authRouter.put("/user", async (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+authRouter.put("/user",tokenVerify, async (req, res) => {
+/*   if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
+  let id = checkToken.user._id; */
+  let id = req.user.user._id;
+
   let user = await User.findOne({ _id: id });
   if (
     req.body.favoriteEvent  &&
@@ -112,12 +119,13 @@ authRouter.put("/user", async (req, res) => {
 
 authRouter.put(
   "/uploadimage",
-  upload.single("profile_picture"),
+  upload.single("profile_picture"),tokenVerify,
   async (req, res) => {
-    if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-    let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+/*     if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+    let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET); */
+    /* let id = checkToken.user._id; */
 
-    let id = checkToken.user._id;
+    let id = req.user.user._id;
     console.log(req.file);
     try {
       const user = await User.findOne({ _id: id });
@@ -133,21 +141,23 @@ authRouter.put(
   }
 );
 
-authRouter.delete("/user", async (req, res) => {
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
-
+authRouter.delete("/user", tokenVerify ,async (req, res) => {
+/*   let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = checkToken.user._id; */
+  let id = req.user.user._id;
   User.findOneAndUpdate({ _id: id }, { $pull: req.body })
     .then((NewUser) => res.json(NewUser))
     .catch((err) => res.json(err));
 });
 
-authRouter.put("/update", async (req, res) => {
-  if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
-  let id = checkToken.user._id;
-  let user = await User.findOne({ _id: id });
 
+
+authRouter.put("/update", tokenVerify ,async (req, res) => {
+  // if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
+  // let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
+  let id = req.user.user._id;
+  let user = await User.findOne({ _id: id });
+  
   if (req.body.email) {
     const emailExist = await User.findOne({ email: req.body.email });
     if (emailExist && emailExist._id !== user._id)
@@ -171,3 +181,5 @@ authRouter.put("/update", async (req, res) => {
 });
 
 module.exports = authRouter;
+
+

@@ -12,7 +12,7 @@ const dateForEventRouter = require("./Backend/Routes/dateForEventRouteur");
 const commentRouter = require("./Backend/Routes/commentRouter");
 
 const cors = require("cors");
-app.use("public/images", express.static("public/images"));
+app.use("/public/images", express.static(path.join(__dirname, "/public/images")));
 app.get("/public/images/:filename", (req, res) => {
   const file = `public/images/${req.params.filename}`;
   res.sendFile(path.resolve(file));
