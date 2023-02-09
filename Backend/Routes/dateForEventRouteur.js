@@ -18,8 +18,6 @@ dateForEventRouter.get("/dateForEvent/all/:id", async (req, res) => {
 });
 
 dateForEventRouter.put("/dateForEvent/:id",tokenVerify, async (req, res) => {
-  // if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  // let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = req.user.user._id;
 
   const allDateForEvent = await DateForEvent.find({

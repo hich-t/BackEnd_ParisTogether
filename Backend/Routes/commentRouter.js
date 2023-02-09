@@ -18,8 +18,6 @@ commentRouter.get("/comment/:id", async (req, res) => {
 });
 
 commentRouter.post("/comment/:id",tokenVerify, async (req, res) => {
-  // if( !req.headers.authorization )return res.status(401).send("Vous n'êtes pas connecté")
-  // let checkToken = jwt.verify(req.headers.authorization, process.env.SECRET);
   let id = req.user.user._id;
 
   const comment = new Comment({
